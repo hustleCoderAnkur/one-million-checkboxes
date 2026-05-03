@@ -3,127 +3,578 @@
 
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Checkbox App</title>
-
     <style>
         :root {
             --bg: #0a0a0f;
             --surface: #12121a;
+            --surface2: #171722;
             --border: rgba(255, 255, 255, 0.08);
+            --border2: rgba(124, 106, 255, 0.22);
             --accent: #7c6aff;
+            --accent2: #a694ff;
+            --accent-glow: rgba(124, 106, 255, 0.25);
             --text: #f0f0f5;
             --muted: #6b6b80;
+            --good: #6bffb8;
+            --bad: #ff6b6b;
         }
 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
         body {
+            height: 100%;
             background: var(--bg);
             color: var(--text);
-            font-family: monospace;
-            margin: 0;
+            font-family: "DM Mono", monospace;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(124, 106, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(124, 106, 255, 0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            height: 100vh;
+            display: grid;
+            grid-template-rows: 60px 1fr 42px;
         }
 
         .topbar {
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            padding: 12px 20px;
+            padding: 0 20px;
+            background: rgba(18, 18, 26, 0.92);
+            backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border);
-            background: var(--surface);
         }
 
-        button {
-            background: var(--accent);
-            border: none;
-            padding: 6px 12px;
-            color: white;
-            cursor: pointer;
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: "Syne", sans-serif;
+            font-weight: 800;
+            font-size: 18px;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-badge {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--accent);
             border-radius: 6px;
+            display: grid;
+            place-items: center;
+            color: var(--accent);
+            font-size: 12px;
         }
 
-        /* Grid */
+        .stats {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            color: var(--muted);
+            font-size: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .stat strong {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(124, 106, 255, 0.10);
+            border: 1px solid var(--border2);
+            color: var(--accent2);
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent2);
+            box-shadow: 0 0 10px var(--accent2);
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .username {
+            color: var(--muted);
+            font-size: 12px;
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .btn {
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            transition: 0.2s;
+        }
+
+        .btn:hover {
+            border-color: var(--border2);
+            background: rgba(124, 106, 255, 0.10);
+        }
+
+        .main {
+            overflow: auto;
+            padding: 18px;
+        }
+
+        .main::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .main::-webkit-scrollbar-thumb {
+            background: rgba(124, 106, 255, 0.25);
+            border-radius: 999px;
+        }
+
+        .panel {
+            background: rgba(18, 18, 26, 0.72);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+        }
+
+        .grid-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .grid-title {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .grid-title strong {
+            color: var(--text);
+        }
+
+        .ws {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .ws.connected {
+            color: var(--good);
+        }
+
+        .ws.disconnected {
+            color: var(--bad);
+        }
+
         .grid {
             display: grid;
-            grid-template-columns: repeat(40, 20px);
+            grid-template-columns: repeat(40, 18px);
             gap: 6px;
-            padding: 20px;
-            height: calc(100vh - 60px);
-            overflow: auto;
+            width: fit-content;
+            max-width: 100%;
+            margin: 0 auto;
         }
 
         .cb {
-            width: 20px;
-            height: 20px;
-            border: 1px solid var(--border);
+            width: 18px;
+            height: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            background: rgba(255, 255, 255, 0.03);
             border-radius: 4px;
             cursor: pointer;
+            transition: transform 0.08s, background 0.08s, border-color 0.08s, box-shadow 0.08s;
+            position: relative;
+        }
+
+        .cb:hover {
+            border-color: rgba(124, 106, 255, 0.50);
+            background: rgba(124, 106, 255, 0.12);
+            transform: scale(1.12);
+            z-index: 2;
         }
 
         .cb.checked {
             background: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 14px rgba(124, 106, 255, 0.25);
+        }
+
+        .cb.just-toggled {
+            animation: pop 0.18s ease;
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.25);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .footer {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 20px;
+            border-top: 1px solid var(--border);
+            background: rgba(18, 18, 26, 0.92);
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .progress {
+            flex: 1;
+            height: 6px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.06);
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            border-radius: 999px;
+            transition: width 0.2s;
+        }
+
+        #loading {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            display: grid;
+            place-items: center;
+            background: var(--bg);
+            transition: opacity 0.25s;
+        }
+
+        #loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .spin {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
 
 <body>
-
-    <div class="topbar">
-        <div>Checkbox App</div>
-        <div>
-            Checked: <span id="count">0</span>
-            <button onclick="logout()">Logout</button>
+    <div id="loading">
+        <div class="loader">
+            <div class="spin"></div>
+            <div id="loading-text">Connecting...</div>
         </div>
     </div>
 
-    <div id="grid" class="grid"></div>
+    <div class="app">
+        <header class="topbar">
+            <div class="brand">
+                <div class="brand-badge">✓</div>
+                Checkbox
+            </div>
+
+            <div class="stats">
+                <div class="stat">Checked: <strong id="count">0</strong></div>
+                <div class="stat">Total: <strong>1,000</strong></div>
+                <div class="pill"><span class="dot"></span><span id="clients">0</span> online</div>
+            </div>
+
+            <div class="actions">
+                <div class="username" id="username"></div>
+                <button class="btn" onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <main class="main">
+            <div class="panel">
+                <div class="grid-head">
+                    <div class="grid-title"><strong>1,000</strong> checkboxes</div>
+                    <div class="ws disconnected" id="ws-status">disconnected</div>
+                </div>
+                <div id="grid" class="grid"></div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <span id="progress-text">0 / 1,000</span>
+            <div class="progress">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <span id="progress-pct">0%</span>
+        </footer>
+    </div>
 
     <script>
-        const TOTAL = 100000;
+        const TOTAL = 1000;
+        const COLS = 40;
+
         const grid = document.getElementById("grid");
         const countEl = document.getElementById("count");
+        const clientsEl = document.getElementById("clients");
+        const progressFill = document.getElementById("progress-fill");
+        const progressText = document.getElementById("progress-text");
+        const progressPct = document.getElementById("progress-pct");
+        const wsStatus = document.getElementById("ws-status");
+        const loading = document.getElementById("loading");
+        const loadingText = document.getElementById("loading-text");
+        const usernameEl = document.getElementById("username");
 
-        // create grid
-        for (let i = 0; i < TOTAL; i++) {
-            const el = document.createElement("div");
-            el.className = "cb";
-            el.dataset.i = i;
-
-            el.onclick = () => {
-                ws.send(JSON.stringify({
-                    type: "toggle",
-                    index: i
-                }));
-            };
-
-            grid.appendChild(el);
-        }
-
-        // websocket
-        const ws = new WebSocket("ws://localhost:3000");
-
-        ws.onmessage = (e) => {
-            const data = JSON.parse(e.data);
-
-            if (data.type === "update") {
-                const el = document.querySelector(`[data-i='${data.index}']`);
-                if (el) el.classList.toggle("checked", data.value);
-                countEl.innerText = data.count;
-            }
+        const state = {
+            checkedCount: 0,
+            user: null,
+            ws: null,
+            wsReady: false,
         };
 
-        // stats
-        async function loadStats() {
-            const res = await fetch("/api/stats");
-            const data = await res.json();
-            countEl.innerText = data.checked;
+        function setLoading(text) {
+            loadingText.textContent = text;
         }
-        loadStats();
 
-        // logout
+        function hideLoading() {
+            loading.classList.add("hidden");
+            setTimeout(() => loading.remove(), 250);
+        }
+
+        function setWsStatus(connected) {
+            wsStatus.textContent = connected ? "connected" : "disconnected";
+            wsStatus.className = connected ? "ws connected" : "ws disconnected";
+        }
+
+        function updateCountUI(count) {
+            state.checkedCount = count;
+            countEl.textContent = count.toLocaleString();
+            progressText.textContent = `${count.toLocaleString()} / ${TOTAL.toLocaleString()}`;
+            const pct = ((count / TOTAL) * 100).toFixed(2);
+            progressPct.textContent = pct + "%";
+            progressFill.style.width = pct + "%";
+        }
+
+        function updateClientsUI(count) {
+            clientsEl.textContent = count;
+        }
+
+        function markCell(index, value) {
+            const el = document.querySelector(`[data-i="${index}"]`);
+            if (!el) return;
+
+            el.classList.toggle("checked", !!value);
+            el.classList.remove("just-toggled");
+            void el.offsetWidth;
+            el.classList.add("just-toggled");
+        }
+
+        function makeWsUrl() {
+            const proto = location.protocol === "https:" ? "wss:" : "ws:";
+            return `${proto}//${location.host}`;
+        }
+
+        function connectWS() {
+            if (state.ws) {
+                try { state.ws.close(); } catch { }
+            }
+
+            const ws = new WebSocket(makeWsUrl());
+            state.ws = ws;
+            state.wsReady = false;
+            setWsStatus(false);
+            setLoading("Connecting to server...");
+
+            ws.onopen = () => {
+                state.wsReady = true;
+                setWsStatus(true);
+            };
+
+            ws.onmessage = (e) => {
+                let data;
+                try {
+                    data = JSON.parse(e.data);
+                } catch {
+                    return;
+                }
+
+                if (data.type === "connected") {
+                    if (typeof data.total === "number") {
+                        // optional total from server
+                    }
+                    if (data.user) {
+                        state.user = data.user;
+                        usernameEl.textContent = data.user.username || data.user.email || "";
+                    }
+                    hideLoading();
+                }
+
+                if (data.type === "update") {
+                    markCell(data.index, data.value);
+                    if (typeof data.count === "number") updateCountUI(data.count);
+                }
+
+                if (data.type === "stats") {
+                    if (typeof data.count === "number") updateCountUI(data.count);
+                    if (typeof data.clients === "number") updateClientsUI(data.clients);
+                }
+
+                if (data.type === "error") {
+                    console.warn(data.message || "WebSocket error");
+                }
+            };
+
+            ws.onclose = () => {
+                state.wsReady = false;
+                setWsStatus(false);
+                setTimeout(connectWS, 1000);
+            };
+
+            ws.onerror = () => {
+                try { ws.close(); } catch { }
+            };
+        }
+
+        function createGrid() {
+            const frag = document.createDocumentFragment();
+
+            for (let i = 0; i < TOTAL; i++) {
+                const el = document.createElement("div");
+                el.className = "cb";
+                el.dataset.i = i;
+
+                el.addEventListener("click", () => {
+                    if (!state.ws || !state.wsReady) return;
+
+                    state.ws.send(JSON.stringify({
+                        type: "toggle",
+                        index: i
+                    }));
+                });
+
+                frag.appendChild(el);
+            }
+
+            grid.appendChild(frag);
+        }
+
+        async function loadStats() {
+            try {
+                const res = await fetch("/api/stats", { credentials: "include" });
+                const data = await res.json();
+
+                if (typeof data.checked === "number") {
+                    updateCountUI(data.checked);
+                } else if (typeof data.checkedCount === "number") {
+                    updateCountUI(data.checkedCount);
+                }
+
+                if (typeof data.clients === "number") updateClientsUI(data.clients);
+                if (typeof data.connectedClients === "number") updateClientsUI(data.connectedClients);
+            } catch { }
+        }
+
+        async function checkSession() {
+            try {
+                const res = await fetch("/api/me", { credentials: "include" });
+                const data = await res.json();
+
+                if (data.user) {
+                    state.user = data.user;
+                    usernameEl.textContent = data.user.username || data.user.email || "";
+                } else {
+                    window.location.href = "/";
+                }
+            } catch {
+                window.location.href = "/";
+            }
+        }
+
         async function logout() {
-            await fetch("/api/logout", { method: "POST" });
+            try {
+                await fetch("/api/logout", {
+                    method: "POST",
+                    credentials: "include"
+                });
+            } catch { }
             window.location.href = "/";
         }
-    </script>
 
+        (async function init() {
+            setLoading("Checking session...");
+            await checkSession();
+
+            setLoading("Building grid...");
+            createGrid();
+
+            setLoading("Loading stats...");
+            await loadStats();
+
+            connectWS();
+        })();
+    </script>
 </body>
 
 </html>
