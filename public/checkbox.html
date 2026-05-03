@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Checkbox App</title>
+
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --surface: #12121a;
+            --border: rgba(255, 255, 255, 0.08);
+            --accent: #7c6aff;
+            --text: #f0f0f5;
+            --muted: #6b6b80;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: monospace;
+            margin: 0;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        button {
+            background: var(--accent);
+            border: none;
+            padding: 6px 12px;
+            color: white;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        /* Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(40, 20px);
+            gap: 6px;
+            padding: 20px;
+            height: calc(100vh - 60px);
+            overflow: auto;
+        }
+
+        .cb {
+            width: 20px;
+            height: 20px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .cb.checked {
+            background: var(--accent);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="topbar">
+        <div>Checkbox App</div>
+        <div>
+            Checked: <span id="count">0</span>
+            <button onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div id="grid" class="grid"></div>
+
+    <script>
+        const TOTAL = 100000;
+        const grid = document.getElementById("grid");
+        const countEl = document.getElementById("count");
+
+        // create grid
+        for (let i = 0; i < TOTAL; i++) {
+            const el = document.createElement("div");
+            el.className = "cb";
+            el.dataset.i = i;
+
+            el.onclick = () => {
+                ws.send(JSON.stringify({
+                    type: "toggle",
+                    index: i
+                }));
+            };
+
+            grid.appendChild(el);
+        }
+
+        // websocket
+        const ws = new WebSocket("ws://localhost:3000");
+
+        ws.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+
+            if (data.type === "update") {
+                const el = document.querySelector(`[data-i='${data.index}']`);
+                if (el) el.classList.toggle("checked", data.value);
+                countEl.innerText = data.count;
+            }
+        };
+
+        // stats
+        async function loadStats() {
+            const res = await fetch("/api/stats");
+            const data = await res.json();
+            countEl.innerText = data.checked;
+        }
+        loadStats();
+
+        // logout
+        async function logout() {
+            await fetch("/api/logout", { method: "POST" });
+            window.location.href = "/";
+        }
+    </script>
+
+</body>
+
+</html>
