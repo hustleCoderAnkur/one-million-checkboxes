@@ -204,10 +204,9 @@ export async function oidcCallbackHandler(req, res) {
         const user = result.rows[0] 
         const sessionId = createSession(user.id, user.username) 
         setSessionCookie(res, sessionId) 
-
-        res.redirect("/checkbox.html?auth=ok") 
+        res.redirect("/?auth=ok")
     } catch (err) {
         console.error("[OIDC Callback Error]", err) 
-        res.redirect("/checkbox.html?error=oidc_failed") 
+        res.redirect("/?error=oidc_failed")
     }
 }
