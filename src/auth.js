@@ -32,7 +32,7 @@ function destroySession(req) {
 
 function setSessionCookie(res, sessionId) {
     const secure = process.env.NODE_ENV === "production" ? "  Secure" : ""
-    res.setHeader("Set-Cookie", `sessionId=${sessionId}  Path=/  HttpOnly  SameSite=Lax${secure}`)
+    res.setHeader("Set-Cookie", `sessionId=${sessionId};  Path=/  HttpOnly  SameSite=Lax${secure}`)
 }
 
 
@@ -184,7 +184,7 @@ export async function oidcCallbackHandler(req, res) {
     try {
         const params = oidcClient.callbackParams(req) 
         const tokenSet = await oidcClient.callback(
-            `${process.env.APP_BASE_URL}/auth/google/callback`,
+            `${APP_BASE_URL}/auth/google/callback`,
             params,
             { state, code_verifier: codeVerifier }
         ) 

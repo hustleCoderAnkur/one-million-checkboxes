@@ -7,12 +7,12 @@ const pool = new Pool({
     ssl: process.env.NODE_ENV === "production"
         ? { rejectUnauthorized: false }
         : false,
-});
+})
 
 export async function connectDB() {
-    const client = await pool.connect();
+    const client = await pool.connect()
     try {
-        await client.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto`);
+        await client.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto`)
 
         await client.query(`
             CREATE TABLE IF NOT EXISTS users (
@@ -24,12 +24,12 @@ export async function connectDB() {
                 oidc_sub TEXT,
                 created_at TIMESTAMPTZ DEFAULT NOW()
             )
-        `);
+        `)
 
-        console.log("[DB] Connected and tables ready");
+        console.log("[DB] Connected and tables ready")
     } finally {
-        client.release();
+        client.release()
     }
 }
 
-export default pool;
+export default pool
