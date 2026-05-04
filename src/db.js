@@ -4,26 +4,32 @@ const { Pool } = pg;
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
+    ssl: process.env.NODE_ENV === "production"
+        ? { rejectUnauthorized: false }
+        : false,
 });
 
 export async function connectDB() {
     const client = await pool.connect();
+    try {
+        await client.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto`);
 
-    await client.query(`
-        CREATE TABLE IF NOT EXISTS users (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            username VARCHAR(50) UNIQUE,
-            email VARCHAR(255) UNIQUE NOT NULL,
-            password_hash TEXT,
-            oidc_provider VARCHAR(50),
-            oidc_sub TEXT,
-            created_at TIMESTAMPTZ DEFAULT NOW()
-        );
-    `);
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                username VARCHAR(50) UNIQUE,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password_hash TEXT,
+                oidc_provider VARCHAR(50),
+                oidc_sub TEXT,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        `);
 
-    client.release();
-    console.log("[DB] Connected and tables ready");
+        console.log("[DB] Connected and tables ready");
+    } finally {
+        client.release();
+    }
 }
 
 export default pool;
