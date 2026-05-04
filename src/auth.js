@@ -18,21 +18,21 @@ function createSession(userId, username) {
 
 function getSessionUser(req) {
     const cookie = req.headers.cookie || ""
-    const match = cookie.match(/sessionId=([^ ]+)/)
+    const match = cookie.match(/sessionId=([^ ;]+)/)
     const sessionId = match ? match[1] : null
     return sessionId && sessions.has(sessionId) ? sessions.get(sessionId) : null
 }
 
 function destroySession(req) {
     const cookie = req.headers.cookie || ""
-    const match = cookie.match(/sessionId=([^ ]+)/)
+    const match = cookie.match(/sessionId=([^ ;]+)/)
     const sessionId = match ? match[1] : null
     if (sessionId) sessions.delete(sessionId)
 }
 
 function setSessionCookie(res, sessionId) {
-    const secure = process.env.NODE_ENV === "production" ? "  Secure" : ""
-    res.setHeader("Set-Cookie", `sessionId=${sessionId};  Path=/  HttpOnly  SameSite=Lax${secure}`)
+    const secure = process.env.NODE_ENV === "production" ? "; Secure" : ""
+    res.setHeader("Set-Cookie", `sessionId=${sessionId}; Path=/; HttpOnly; SameSite=Lax${secure}`)
 }
 
 
@@ -51,7 +51,7 @@ export async function signupHandler(req, res) {
         const exists = await pool.query(
             "SELECT id FROM users WHERE email = $1 OR username = $2",
             [email, username]
-        ) 
+        )
 
         if (exists.rows.length > 0) {
             return res.status(409).json({ error: "Username or email already taken" })
@@ -64,7 +64,7 @@ export async function signupHandler(req, res) {
             [username, email, password_hash]
         )
 
-        const user = result.rows[0] 
+        const user = result.rows[0]
         const sessionId = createSession(user.id, user.username)
         setSessionCookie(res, sessionId)
 
@@ -106,7 +106,7 @@ export async function loginHandler(req, res) {
 
         res.json({ success: true, username: user.username })
     } catch (err) {
-        console.error("[Login Error]", err) 
+        console.error("[Login Error]", err)
         res.status(500).json({ error: "Internal server error" })
     }
 }
@@ -114,7 +114,7 @@ export async function loginHandler(req, res) {
 
 export function logoutHandler(req, res) {
     destroySession(req)
-    res.setHeader("Set-Cookie", "sessionId=  Max-Age=0  Path=/")
+    res.setHeader("Set-Cookie", "sessionId=; Max-Age=0; Path=/")
     res.json({ success: true })
 }
 
@@ -141,7 +141,7 @@ export async function initOIDC() {
         client_secret: process.env.GOOGLE_CLIENT_SECRET,
         redirect_uris: [`${APP_BASE_URL}/auth/google/callback`],
         response_types: ["code"],
-    }) 
+    })
 
     console.log("[OIDC] Google client ready")
 }
@@ -162,7 +162,8 @@ export function oidcLoginHandler(req, res) {
         state,
         code_challenge: codeChallenge,
         code_challenge_method: "S256",
-    }) 
+        prompt: "select_account",  // FIX: always show Google account picker
+    })
 
     res.redirect(redirectUrl)
 }
@@ -182,16 +183,16 @@ export async function oidcCallbackHandler(req, res) {
     oidcStates.delete(state)
 
     try {
-        const params = oidcClient.callbackParams(req) 
+        const params = oidcClient.callbackParams(req)
         const tokenSet = await oidcClient.callback(
             `${APP_BASE_URL}/auth/google/callback`,
             params,
             { state, code_verifier: codeVerifier }
-        ) 
+        )
 
-        const userInfo = await oidcClient.userinfo(tokenSet.access_token) 
+        const userInfo = await oidcClient.userinfo(tokenSet.access_token)
 
-        const { sub, email, name } = userInfo 
+        const { sub, email, name } = userInfo
 
         const result = await pool.query(
             `INSERT INTO users (email, username, oidc_provider, oidc_sub)
@@ -199,14 +200,14 @@ export async function oidcCallbackHandler(req, res) {
              ON CONFLICT (email) DO UPDATE SET oidc_sub = EXCLUDED.oidc_sub
              RETURNING id, username`,
             [email, name?.replace(/\s+/g, "_").toLowerCase().slice(0, 50) || email.split("@")[0], sub]
-        ) 
+        )
 
-        const user = result.rows[0] 
-        const sessionId = createSession(user.id, user.username) 
-        setSessionCookie(res, sessionId) 
+        const user = result.rows[0]
+        const sessionId = createSession(user.id, user.username)
+        setSessionCookie(res, sessionId)
         res.redirect("/?auth=ok")
     } catch (err) {
-        console.error("[OIDC Callback Error]", err) 
+        console.error("[OIDC Callback Error]", err)
         res.redirect("/?error=oidc_failed")
     }
 }
